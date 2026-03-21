@@ -43,6 +43,22 @@ class ControllerPIDBicycle(Controller):
         self.current_idx = min_idx
         
         # TODO 4.1.3: PID Control for Bicycle Kinematic Model
-        next_delta = 0
+        # 1. Get the target point from the path
+        target = self.path[self.current_idx]
+
+        # 2. Calculate Cross-Track Error (CTE)
+        # We use a simple distance-based error or vector-based error [cite: 416]
+        dx = target[0] - x
+        dy = target[1] - y
+        # Error is the perpendicular distance to the path heading
+        error = dy * np.cos(np.deg2rad(yaw)) - dx * np.sin(np.deg2rad(yaw))
+
+        # 3. PID calculation [cite: 416]
+        self.acc_ep += error * self.dt
+        diff_ep = (error - self.last_ep) / self.dt
+        
+        next_delta = self.kp * error + self.ki * self.acc_ep + self.kd * diff_ep
+        self.last_ep = error
+        
         # [end] TODO 4.1.3
         return next_delta

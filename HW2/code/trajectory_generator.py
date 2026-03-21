@@ -59,12 +59,35 @@ def generate_speed_profile(path_x, path_y, max_v=20.0, max_lat_acc=2.0, max_long
     curvature = np.clip(curvature, 0, 10.0)
 
     # TODO 3.1.b Speed limit from curvature
-    v_ref = np.ones_like(curvature) * 15
+    # Calculate initial v_ref based on curvature and lateral acceleration limit
+    v_ref = np.sqrt(max_lat_acc / (curvature + 1e-6))
+    v_ref = np.clip(v_ref, 0, max_v)
     # [end] TODO 3.1.b
 
     # TODO 3.1.c Longitudinal Smoothing
-    pass
+    # Set boundary conditions as required by the assignment
+    v_ref[0] = 5.0   # Start speed 
+    v_ref[-1] = 0.0  # End speed 
+
+    dx = np.diff(path_x)
+    dy = np.diff(path_y)
+    ds_seg = np.sqrt(dx**2 + dy**2)
+
+    # 1. Forward Pass: Limit acceleration
+    # v_i^2 <= v_{i-1}^2 + 2 * a_acc * ds
+    for i in range(1, len(v_ref)):
+        v_max_forward = np.sqrt(v_ref[i-1]**2 + 2.0 * max_long_acc * ds_seg[i-1])
+        if v_ref[i] > v_max_forward:
+            v_ref[i] = v_max_forward
+
+    # 2. Backward Pass: Limit deceleration
+    # v_i^2 <= v_{i+1}^2 + 2 * a_dec * ds
+    for i in range(len(v_ref) - 2, -1, -1):
+        v_max_backward = np.sqrt(v_ref[i+1]**2 + 2.0 * max_long_dec * ds_seg[i])
+        if v_ref[i] > v_max_backward:
+            v_ref[i] = v_max_backward
     # [end] TODO 3.1.c
+
 
     return v_ref, curvature
 

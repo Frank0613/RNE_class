@@ -45,7 +45,24 @@ class PIDLongController(Controller):
             v_ref = target[4]
         
         # TODO 3.2: PID Control for Longitudinal Motion
-        next_a = v_ref - v
+        # 1. Calculate the velocity error (e = v_ref - v)
+        error = v_ref - v
+        
+        # 2. Update the accumulated error (integral term)
+        self.acc_ep += error * self.dt
+        
+        # 3. Calculate the change in error (derivative term)
+        diff_ep = (error - self.last_ep) / self.dt
+        
+        # 4. Compute PID output: acceleration a = Kp*e + Ki*integral + Kd*derivative
+        next_a = self.kp * error + self.ki * self.acc_ep + self.kd * diff_ep
+        
+        # 5. Store current error for the next time step
+        self.last_ep = error
+        
+        # 6. Constrain the acceleration within the vehicle's physical limits (a_range)
+        # a_range[0] is max deceleration, a_range[1] is max acceleration
+        next_a = np.clip(next_a, self.a_range[0], self.a_range[1])
         # [end] TODO 3.2
 
         return next_a, target

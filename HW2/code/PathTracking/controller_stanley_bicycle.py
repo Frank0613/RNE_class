@@ -7,7 +7,7 @@ from PathTracking.controller import Controller
 class ControllerStanleyBicycle(Controller):
     def __init__(self, model, 
                  # TODO 4.3.1: Tune Stanley Gain
-                 kp=0):
+                 kp=0.5):
         self.path = None
         self.kp = kp
         self.l = model.l
@@ -41,7 +41,26 @@ class ControllerStanleyBicycle(Controller):
         target = self.path[min_idx]
 
         # TODO 4.3.1: Stanley Control for Bicycle Kinematic Model
-        next_delta = 0
+        # 1. Heading error
+        target_yaw = np.deg2rad(target[2])
+        current_yaw = np.deg2rad(yaw)
+        theta_e = utils.angle_norm(target_yaw - current_yaw)
+
+        while theta_e > np.pi:
+            theta_e -= 2 * np.pi
+        while theta_e < -np.pi:
+            theta_e += 2 * np.pi
+
+        # 2. Cross-track error (e)
+        error = np.sin(target_yaw) * (front_x - target[0]) - np.cos(target_yaw) * (front_y - target[1])
+
+        # 3. Stanley formula
+        ks = 5.0
+        delta_e = np.arctan2(self.kp * error, vf + ks)
+        next_delta = np.rad2deg(theta_e + delta_e)
+        next_delta = np.clip(next_delta, -40.0, 40.0)
+
+
+
         # [end] TODO 4.3.1
-    
         return next_delta
