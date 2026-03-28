@@ -8,9 +8,9 @@ class ControllerPIDBasic(Controller):
     def __init__(self, 
                  model, 
                  # TODO 4.1.2: Tune PID Gains
-                 kp=1.0, 
+                 kp=0.5, 
                  ki=0.0, 
-                 kd=0.0):
+                 kd=1.0):
         self.path = None
         self.kp = kp
         self.ki = ki

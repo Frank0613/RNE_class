@@ -69,6 +69,15 @@ class ControllerLQRBicycle(Controller):
         
         if self.control_state == 'steering_angle':
             # TODO 4.4.1: LQR Control for Bicycle Kinematic Model with steering angle as control input
+            search_window = 50
+            start_idx = max(0, self.current_idx - 5)
+            end_idx = min(len(self.path), self.current_idx + search_window)
+            local_path = self.path[start_idx:end_idx]
+            local_min_idx, _ = utils.search_nearest(local_path, (x, y))
+            self.current_idx = start_idx + local_min_idx
+            target = self.path[self.current_idx]
+            target[2] = utils.angle_norm(target[2])
+
             target_yaw = np.deg2rad(target[2])
             current_yaw = np.deg2rad(yaw)
             

@@ -39,6 +39,7 @@ class ControllerPurePursuitBicycle(Controller):
         Ld = self.kp*v + self.Lfc
         
         # TODO 4.3.1: Pure Pursuit Control for Bicycle Kinematic Model
+        
         # 1. Find the lookahead point
         lookahead_idx = self.current_idx
         for i in range(self.current_idx, len(self.path)):

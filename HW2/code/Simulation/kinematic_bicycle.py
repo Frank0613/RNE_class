@@ -16,8 +16,6 @@ class KinematicModelBicycle(KinematicModel):
 
     def step(self, state:State, cstate:ControlState) -> State:
         # TODO 2.3.1: Bicycle Kinematic Model
-        # 1. Update velocity using 'a' (acceleration) from ControlState
-        # v_next = v_current + a * dt
         v = state.v + cstate.a * self.dt
         
         # 2. Convert degrees to radians for trigonometric calculations
@@ -25,9 +23,6 @@ class KinematicModelBicycle(KinematicModel):
         delta_rad = np.deg2rad(cstate.delta)
 
         # 3. Calculate derivatives based on kinematic equations
-        # dx/dt = v * cos(theta)
-        # dy/dt = v * sin(theta)
-        # dyaw/dt = (v / L) * tan(delta)
         dx = v * np.cos(yaw_rad)
         dy = v * np.sin(yaw_rad)
         dyaw_rad = (v / self.l) * np.tan(delta_rad)

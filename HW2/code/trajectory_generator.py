@@ -74,14 +74,12 @@ def generate_speed_profile(path_x, path_y, max_v=20.0, max_lat_acc=2.0, max_long
     ds_seg = np.sqrt(dx**2 + dy**2)
 
     # 1. Forward Pass: Limit acceleration
-    # v_i^2 <= v_{i-1}^2 + 2 * a_acc * ds
     for i in range(1, len(v_ref)):
         v_max_forward = np.sqrt(v_ref[i-1]**2 + 2.0 * max_long_acc * ds_seg[i-1])
         if v_ref[i] > v_max_forward:
             v_ref[i] = v_max_forward
 
     # 2. Backward Pass: Limit deceleration
-    # v_i^2 <= v_{i+1}^2 + 2 * a_dec * ds
     for i in range(len(v_ref) - 2, -1, -1):
         v_max_backward = np.sqrt(v_ref[i+1]**2 + 2.0 * max_long_dec * ds_seg[i])
         if v_ref[i] > v_max_backward:
