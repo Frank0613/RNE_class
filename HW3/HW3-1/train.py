@@ -22,9 +22,9 @@ def main():
     lamb = 0.95
     gamma = 0.99
     clip_val = 0.2
-    lr = 1e-4
+    lr = 3e-4
     n_iter = 30000
-    device = "cpu"
+    device = "cuda" if torch.cuda.is_available() else "cpu"
 
     # Parameters that are fixed
     # ----------------------------

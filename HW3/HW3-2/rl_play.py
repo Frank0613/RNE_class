@@ -32,6 +32,12 @@ class RewardManager:
         2. If the current frame's index > the previous frame's index, it means progress was made. Return a positive reward
         3. If there is no change, return 0.0.
         """
+        if self.prev_observation is None:
+            return 0.0
+        prev_checkpoint = self.prev_observation["last_checkpoint_index"]
+        curr_checkpoint = self.observation["last_checkpoint_index"]
+        if curr_checkpoint > prev_checkpoint:
+            return 800.0
         return 0.0
 
     def calculate_distance_reward(self):
@@ -47,7 +53,21 @@ class RewardManager:
            - If current_distance > prev_distance (getting farther) -> penalize
         3. If the distance hasn't changed, return 0.0.
         """
-        return 0.0
+        if self.prev_observation is None:
+            return 0.0
+        prev_pos = self.prev_observation["target_position"]
+        curr_pos = self.observation["target_position"]
+        
+        prev_dist = (prev_pos[0]**2 + prev_pos[1]**2)**0.5
+        curr_dist = (curr_pos[0]**2 + curr_pos[1]**2)**0.5
+        diff = prev_dist - curr_dist
+        clamped_diff = max(min(diff, 1.0), -1.0)
+    
+        if diff > 0:
+            return clamped_diff * 5.0
+        else:
+            return clamped_diff * 3.0
+
 
     def calculate_survival_reward(self):
         """
@@ -57,7 +77,28 @@ class RewardManager:
         Hints:
         Check if agent's health(agent_health) reaches 0
         """
-        return 0.0
+        if self.observation["agent_health"] <= 0:
+            return -1000.0
+        
+        return 0.2
+    def calculate_avoidance_reward(self):
+        grid = self.observation["terrain_grid"]
+        avoid_reward = 0.0
+        
+        front_terrain = grid[2][3]["terrain_type"]
+        if front_terrain == -1:
+            avoid_reward -= 10.0
+        elif front_terrain == 1:
+            avoid_reward -= 5.0
+        
+        curr_pos = self.observation["target_position"]
+        if self.prev_observation is not None:
+            prev_pos = self.prev_observation["target_position"]
+            dist_moved = ((curr_pos[0]-prev_pos[0])**2 + (curr_pos[1]-prev_pos[1])**2)**0.5
+            if dist_moved < 0.01:
+                avoid_reward -= 0.5
+    
+        return avoid_reward
 
     def calculate_reward(self):
         """
@@ -75,7 +116,12 @@ class RewardManager:
         - total_reward (float): The total score for this frame.
         """
         # TODO 6: Complete the reward function
-        return 0.0
+        reward = 0.0
+        reward += self.calculate_flag_capture_reward()
+        reward += self.calculate_distance_reward()
+        reward += self.calculate_survival_reward()
+        reward += self.calculate_avoidance_reward()
+        return reward
 
 
 class MLPlay:
@@ -83,13 +129,13 @@ class MLPlay:
         self.reward_manager = RewardManager()
 
         self.config = {
-            "learning_rate": 0.0003,
+            "learning_rate": 0.0005,
             "n_steps": 2048,
             "batch_size": 64,
-            "n_epochs": 10,
-            "clip_range": 0.2,
+            "n_epochs": 5,
+            "clip_range": 0.15,
             "gamma": 0.99,
-            "ent_coef": 0,
+            "ent_coef": 0.02,
             "vf_coef": 0.5,
             "max_grad_norm": 0.5,
             "tensorboard_log": os.path.join(os.path.dirname(__file__), "tensorboard"),
